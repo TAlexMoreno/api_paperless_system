@@ -1,0 +1,21 @@
+{
+  "name": "n8n-paperless-integration-api-tamaulipas",
+  "version": "1.0.0",
+  "description": "scripts to integrate n8n with paperless-ngx for API Tamaulipas",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Alejandro Moreno Tapia",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "date-fns": "^4.4.0",
+    "puppeteer": "^25.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.0",
+    "typescript": "^6.0.3"
+  }
+}

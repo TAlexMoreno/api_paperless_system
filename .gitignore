@@ -1,0 +1,45 @@
+# -------------------------------
+# OS / editor clutter
+# -------------------------------
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# -------------------------------
+# Secrets / local environment
+# -------------------------------
+.env
+.env.*
+*.env
+!.env.example
+
+# Keep the compose env file tracked only if you intentionally store non-secret values.
+# Uncomment the next line if this file contains machine-local secrets.
+# /docker-compose.env
+
+# -------------------------------
+# Python / app cache
+# -------------------------------
+__pycache__/
+*.py[cod]
+*.log
+
+# -------------------------------
+# Docker runtime and persistent data
+# (do not replicate to other machines)
+# -------------------------------
+/consume/
+/data/
+/db/
+/export/
+/media/
+
+# n8n: ignore runtime data, keep scripts in git
+/n8n/data/
+!/n8n/scripts/
+!/n8n/scripts/**
+/n8n/scripts/node_modules/
+

@@ -1,0 +1,119 @@
+# Docker Compose file for running paperless from the docker container registry.
+# This file contains everything paperless needs to run.
+# Paperless supports amd64, arm and arm64 hardware.
+#
+# All compose files of paperless configure paperless in the following way:
+#
+# - Paperless is (re)started on system boot, if it was running before shutdown.
+# - Docker volumes for storing data are managed by Docker.
+# - Folders for importing and exporting files are created in the same directory
+#   as this file and mounted to the correct folders inside the container.
+# - Paperless listens on port 8000.
+#
+# In addition to that, this Docker Compose file adds the following optional
+# configurations:
+#
+# - Instead of SQLite (default), PostgreSQL is used as the database server.
+# - Apache Tika and Gotenberg servers are started with paperless and paperless
+#   is configured to use these services. These provide support for consuming
+#   Office documents (Word, Excel, PowerPoint and their LibreOffice counter-
+#   parts).
+#
+# To install and update paperless with this file, do the following:
+#
+# - Copy this file as 'docker-compose.yml' and the files 'docker-compose.env'
+#   and '.env' into a folder.
+# - Run 'docker compose pull'.
+# - Run 'docker compose up -d'.
+#
+# For more extensive installation and update instructions, refer to the
+# documentation.
+services:
+  broker:
+    image: docker.io/library/redis:8
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+  db:
+    image: docker.io/library/postgres:18
+    restart: unless-stopped
+    volumes:
+      - /home/talexmoreno/paperless/paperless-ngx/db:/var/lib/postgresql
+    environment:
+      POSTGRES_DB: paperless
+      POSTGRES_USER: paperless
+      POSTGRES_PASSWORD: paperless
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+  webserver:
+    image: ghcr.io/paperless-ngx/paperless-ngx:beta
+    restart: unless-stopped
+    depends_on:
+      - db
+      - broker
+      - gotenberg
+      - tika
+    ports:
+      - "${PAPERLESS_PORT:-8088}:8000"
+    volumes:
+      - /home/talexmoreno/paperless/paperless-ngx/data:/usr/src/paperless/data
+      - /home/talexmoreno/paperless/paperless-ngx/media:/usr/src/paperless/media
+      - ./export:/usr/src/paperless/export
+      - /home/talexmoreno/paperless/paperless-ngx/consume:/usr/src/paperless/consume
+    env_file: docker-compose.env
+    environment:
+      PAPERLESS_REDIS: redis://broker:6379
+      PAPERLESS_DBHOST: db
+      PAPERLESS_TIKA_ENABLED: 1
+      PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
+      PAPERLESS_TIKA_ENDPOINT: http://tika:9998
+  gotenberg:
+    image: docker.io/gotenberg/gotenberg:8.25
+    restart: unless-stopped
+    # The gotenberg chromium route is used to convert .eml files. We do not
+    # want to allow external content like tracking pixels or even javascript.
+    command:
+      - "gotenberg"
+      - "--chromium-disable-javascript=true"
+      - "--chromium-allow-list=file:///tmp/.*"
+    ports:
+      - "${GOTENBERG_PORT:-3000}:3000"
+  tika:
+    image: docker.io/apache/tika:latest
+    restart: unless-stopped
+    ports:
+      - "${TIKA_PORT:-9998}:9998"
+
+  n8n:
+    image: talexmoreno/n8n-crawler:v1.0
+    restart: unless-stopped
+    depends_on:
+      - webserver
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - GENERIC_TIMEZONE=America/Mexico_City
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - NODE_FUNCTION_ALLOW_EXTERNAL=*
+      - N8N_ENABLE_EXECUTE_COMMAND=true
+      - NODES_EXCLUDE=[]
+      - N8N_INSTANCE_OWNER_MANAGED_BY_ENV=true
+      - N8N_INSTANCE_OWNER_EMAIL=${N8N_INSTANCE_OWNER_EMAIL:-admin@example.com}
+      - N8N_INSTANCE_OWNER_NAME=${N8N_INSTANCE_OWNER_NAME:-Admin}
+      # Defaults to the hash of "Admin123"
+      - N8N_INSTANCE_OWNER_PASSWORD_HASH=${N8N_INSTANCE_OWNER_PASSWORD_HASH:-$2b$12$WVZLn32Kb.NQqNjmGeLUW.RfToEQwEJM/e77P.ehJx4k2IgeMaBbC}
+      - N8N_DB_AUTOMIGRATE=true
+      - N8N_RECOVERY_MODE=true
+    volumes:
+      - /home/talexmoreno/paperless/paperless-ngx/n8n/data:/home/node/.n8n
+      # Optional: Share Paperless consume folder if n8n needs to drop files directly
+      - /home/talexmoreno/paperless/paperless-ngx/consume:/data/paperless-consume
+
+volumes:
+  redisdata:
+  n8n_data:
