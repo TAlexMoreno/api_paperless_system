@@ -1,0 +1,32 @@
+{
+  "name": "control_panel_server",
+  "version": "0.0.1",
+  "description": "backend para el control panel de expedientes de la API tamaulipas",
+  "main": "./src/index.ts",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.13.2",
+    "@types/pg": "^8.20.0",
+    "drizzle-kit": "^1.0.0-rc.4",
+    "tsx": "^4.23.0",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "drizzle-orm": "^1.0.0-rc.4",
+    "express": "^5.2.1",
+    "pg": "^8.22.0"
+  }
+}

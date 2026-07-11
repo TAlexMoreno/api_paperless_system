@@ -1,0 +1,24 @@
+{
+  "name": "control_panel",
+  "private": true,
+  "packageManager": "npm@10.8.2",
+  "version": "0.0.1",
+  "description": "Control panel para el manejo de expedientes de la API Tamaulipas",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.ts",
+  "scripts": {
+    "dev:client": "turbo run dev --filter=client",
+    "dev:server": "turbo run dev --filter=server",
+    "build": "turbo run build",
+    "start": "node apps/control-panel-server/dist/index.js"
+  },
+  "devDependencies": {
+    "turbo": "^2.10.3"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}

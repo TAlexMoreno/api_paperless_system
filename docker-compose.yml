@@ -37,16 +37,33 @@ services:
     ports:
       - "${REDIS_PORT:-6379}:6379"
   db:
+    command: ["postgres", "-c", "listen_addresses=*", "-c", "hba_file=/etc/postgresql/pg_hba.conf"]
     image: docker.io/library/postgres:18
     restart: unless-stopped
     volumes:
       - /home/talexmoreno/paperless/paperless-ngx/db:/var/lib/postgresql
+      - ./postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
     environment:
-      POSTGRES_DB: paperless
-      POSTGRES_USER: paperless
-      POSTGRES_PASSWORD: paperless
+      POSTGRES_DB: "${POSTGRES_PAPERLESS_DB:-paperless}"
+      POSTGRES_USER: "${POSTGRES_USER:-paperless}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-paperless}"
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "0.0.0.0:${POSTGRES_PORT:-5432}:5432"
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    restart: unless-stopped
+    depends_on:
+      - db
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "${PGADMIN_DEFAULT_EMAIL:-admin@example.com}"
+      PGADMIN_DEFAULT_PASSWORD: "${PGADMIN_DEFAULT_PASSWORD:-admin}"
+      PGADMIN_CONFIG_SERVER_MODE: "True"
+      PGADMIN_REPLACE_SERVERS_ON_STARTUP: "True"
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
   webserver:
     image: ghcr.io/paperless-ngx/paperless-ngx:beta
     restart: unless-stopped
@@ -113,7 +130,17 @@ services:
       - /home/talexmoreno/paperless/paperless-ngx/n8n/data:/home/node/.n8n
       # Optional: Share Paperless consume folder if n8n needs to drop files directly
       - /home/talexmoreno/paperless/paperless-ngx/consume:/data/paperless-consume
+  # control_panel:
+  #   build:
+  #     context: control_panel
+  #     dockerfile: ./apps/control-panel-server/DockerFile
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - webserver
+  #     - db
+  #     - n8n
 
 volumes:
   redisdata:
   n8n_data:
+  pgadmin:

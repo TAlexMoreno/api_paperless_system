@@ -43,3 +43,15 @@ __pycache__/
 !/n8n/scripts/**
 /n8n/scripts/node_modules/
 
+# ControlPanel: ignore runtime data, keep scripts in git
+/control_panel/.turbo/
+/control_panel/node_modules/
+/control_panel/apps/*/.env
+/control_panel/apps/*/.env.*
+/control_panel/apps/*/.vscode/
+/control_panel/apps/*/node_modules/
+/control_panel/apps/*/dist/
+/control_panel/apps/*/dist-ssr/
+/control_panel/apps/*/*.local
+
+
