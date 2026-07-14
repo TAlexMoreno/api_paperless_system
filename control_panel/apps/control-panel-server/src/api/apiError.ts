@@ -1,3 +1,5 @@
+import logger from "../libs/logger";
+
 export class APIError extends Error {
     responseCode: number;
     stacktraceRegexp = /at\s+(.*)\s+\((.*):(\d+):(\d+)\)/;
@@ -43,7 +45,6 @@ export class ApiPaperlessError extends APIError {
     }
 
     get responseObject() {
-        super.responseObject;
         return {
             ...super.responseObject,
             URL: this.URL,

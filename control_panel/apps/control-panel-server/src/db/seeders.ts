@@ -1,6 +1,7 @@
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { categoriaDocumento, tipoDocumento } from "./schema.js";
 import { eq } from "drizzle-orm/sql/expressions/conditions";
+import logger from "../libs/logger.js";
 
 export async function seedCategoriaDocumento(db: NodePgDatabase) {
     let categorias = [
@@ -20,9 +21,9 @@ export async function seedCategoriaDocumento(db: NodePgDatabase) {
         let categoriasDb = await db.select().from(categoriaDocumento).where(eq(categoriaDocumento.nombre, categoria));
         if (categoriasDb.length === 0) {
             await db.insert(categoriaDocumento).values({ nombre: categoria });
-            console.log(`💾 C"${categoria}"`);
+            logger.debug(`💾 "${categoria}"`);
         } else {
-            console.log(`✅ C"${categoria}"`);
+            logger.debug(`✅ "${categoria}"`);
         }
     }
 }
@@ -105,17 +106,17 @@ export async function seedTipoDocumento(db: NodePgDatabase) {
     for (const tipo of tiposDocumento) {
         let categorias = await db.select().from(categoriaDocumento).where(eq(categoriaDocumento.nombre, tipo.categoria))
         if (categorias.length === 0) {
-            console.error(`${tipo.nombre}: ${tipo.categoria} 🔎❌`);
+            logger.error(`${tipo.nombre}: ${tipo.categoria} 🔎❌`);
             continue;
         }
 
         let categoriaId = categorias[0]!.id;
         let tipos = await db.select().from(tipoDocumento).where(eq(tipoDocumento.nombre, tipo.nombre));
         if (tipos.length === 0) {
-            await db.insert(tipoDocumento).values({ nombre: tipo.nombre, categoria: categoriaId });
-            console.log(`💾 ${tipo.nombre}"`);
+            await (db.insert(tipoDocumento) as any).values({ nombre: tipo.nombre, categoria: categoriaId });
+            logger.debug(`💾 "${tipo.nombre}"`);
         } else {
-            console.log(`✅ ${tipo.nombre}"`);
+            logger.debug(`✅ "${tipo.nombre}"`);
         }
     }
 }

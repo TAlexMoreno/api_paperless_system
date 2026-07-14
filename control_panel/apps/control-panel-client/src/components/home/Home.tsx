@@ -1,10 +1,12 @@
 export default function Home() {
     return (
-        <div className="flex flex-col items-center justify-center grow">
-            <h1 className="text-4xl font-bold">Bienvenido al Panel de Control</h1>
-            <p className="mt-4 text-lg text-center">
-                Este es el panel de control para administrar la aplicación Paperless.
-            </p>
+        <div className="flex flex-col grow p-5 w-full">
+            <div className="card shadow-md bg-base-300 w-full">
+                <div className="card-body">
+                    <h2 className="card-title">Bienvenido a API Tam - XPControl</h2>
+                    <p>Esta herramienta permite gestionar y controlar los expedientes de la Administración Portuaria Integral del estado de Tamaulipas.</p>
+                </div>
+            </div>
         </div>
     )
 }

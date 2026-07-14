@@ -49,4 +49,22 @@ export default class ApiState {
 
         return response.json() as Promise<T>;
     }
+
+    async post<T>(endpoint: string, data: any): Promise<T> {
+        const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data),
+            credentials: "include"
+        });
+
+        if (!response.ok) {
+            console.log("POST request failed with status:", response.status);
+            throw new Error("POST request failed");
+        }
+
+        return response.json() as Promise<T>;
+    }
 }

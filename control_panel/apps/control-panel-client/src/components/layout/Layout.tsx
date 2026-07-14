@@ -2,7 +2,8 @@ import { Outlet, useRouteLoaderData } from "react-router-dom";
 import type { plessProfile, plessUISettings } from "../../../../../packages/paperless/types";
 import type { RouteAuthLoaderData } from "../../utils/routeAuthLoader";
 import UserDropdown from "./userDropdown";
-import { Home, Menu, TrendingUp } from "lucide-react";
+import { Menu } from "lucide-react";
+import { SidebarMenu } from "./SidebarMenu";
 
 export default function Layout(){
     const authData = useRouteLoaderData("root") as RouteAuthLoaderData | undefined;
@@ -14,9 +15,11 @@ export default function Layout(){
             <input id="sidebar" type="checkbox" className="drawer-toggle" />
             <div className="drawer-content flex flex-col min-h-screen">
                 <nav className="navbar bg-base-200 p-4 h-16 flex justify-between items-center shadow-sm">
-                    <label htmlFor="sidebar" aria-label="open sidebar" className="btn btn-square btn-ghost">
-                        <Menu />
-                    </label>
+                    {loggedInUser && (
+                        <label htmlFor="sidebar" aria-label="open sidebar" className="btn btn-square btn-ghost">
+                            <Menu />
+                        </label>
+                    )}
                     {loggedInUser ? (
                         <UserDropdown profile={loggedInUser} uiSettings={uiSettings!} />
                     ) : (
@@ -29,25 +32,7 @@ export default function Layout(){
                 </footer>
             </div>
             
-            {loggedInUser && (
-            <div className="drawer-side is-drawer-close:overflow-visible">
-                <label htmlFor="sidebar" aria-label="close sidebar" className="drawer-overlay"></label>
-                <div className="flex min-h-full flex-col items-start bg-base-300 is-drawer-close:w-14 is-drawer-open:w-64">
-                    <div className="w-full h-16 flex items-center justify-center">
-                        <TrendingUp className="text-accent" />
-                        <span className="ml-2 text-lg font-bold is-drawer-close:hidden whitespace-nowrap">API Tam - Control</span>
-                    </div>
-                    <ul className="menu w-full grow">
-                        <li>
-                            <button className="is-drawer-close:tooltip is-drawer-close:tooltip-right" data-tip="Inicio">
-                                <Home className="size-4" />
-                                <span className="is-drawer-close:hidden">Inicio</span>
-                            </button>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-            )}
+            {loggedInUser && <SidebarMenu loggedInUser={loggedInUser} uiSettings={uiSettings!} />}
         </div>
     )
 }
