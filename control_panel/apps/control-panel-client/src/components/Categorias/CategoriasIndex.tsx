@@ -1,4 +1,4 @@
-import { Plus, Save } from "lucide-react";
+import { CircleCheckBig, CircleMinus, Plus, Save } from "lucide-react";
 import Multiview from "../../utils/multiview";
 import { useFetcher, useParams } from "react-router-dom";
 import type { Categoria } from "../../../../../packages/server/types";
@@ -10,6 +10,16 @@ async function fetchCategoria(id: string): Promise<Categoria> {
         throw new Error(`Error fetching category with id ${id}: ${response.statusText}`);
     }
     return await response.json();
+}
+
+export function CategoriaRow({ item, index, columns, redirectToDetailPage }: { item: Categoria, index: number, columns: any[], redirectToDetailPage: (item: Categoria) => void }) {
+    return (
+        <tr key={index} className="hover cursor-pointer" onClick={() => redirectToDetailPage(item)}>
+            <td>{item.id}</td>
+            <td>{item.nombre}</td>
+            <td>{item.habilitado ? <CircleCheckBig /> : <CircleMinus /> }</td>
+        </tr>
+    );
 }
 
 export default function CategoriasIndex() {
@@ -88,10 +98,10 @@ export default function CategoriasIndex() {
                         <button className="btn btn-circle btn-accent tooltip" data-tip="Agregar categoría"><Plus /></button>
                     </div>
                     <Multiview endpoint="/api/categorias" columns={[
-                        { title: "ID", field: "id", template: "{{id}}" },
-                        { title: "Nombre", field: "nombre", template: "{{nombre}}" },
-                        { title: "Habilitado", field: "habilitado", template: "{{#if habilitado}}Sí{{else}}No{{/if}}" },
-                    ]} indexField="id" />
+                        { title: "ID", field: "id" },
+                        { title: "Nombre", field: "nombre" },
+                        { title: "Habilitado", field: "habilitado" },
+                    ]} indexField="id" rowComponent={CategoriaRow} emptyMessage="No hay categorías disponibles" />
                 </div>
             </div>
         </div>

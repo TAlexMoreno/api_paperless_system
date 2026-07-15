@@ -3,6 +3,14 @@ import Handlebars from "handlebars";
 import type { CollectionResponse, Categoria } from "../../../../packages/server/types";
 import { ListSortAscending, ListSortDescending } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import React from "react";
+
+function getValueByPath(item: any, path: string): unknown {
+    return path.split(".").reduce((current, key) => {
+        if (current == null) return undefined;
+        return current[key];
+    }, item);
+}
 
 export interface MultiviewProps {
     endpoint: string;
@@ -10,15 +18,14 @@ export interface MultiviewProps {
     itemsPerPage?: number;
     pageOptions?: number[];
     indexField: string;
+    rowComponent?: React.ComponentType<{ item: any, index: number, columns: MultiviewColumn[], redirectToDetailPage: (item: any) => void }>;
+    emptyMessage?: string;
 }
 
 export interface MultiviewColumn {
     title: string;
     field: string;
-    template?: string;
     sorteable?: boolean;
-    async?: boolean;
-    joinField?: string;
 }
 
 export interface SortData {
@@ -26,7 +33,7 @@ export interface SortData {
     direction: "asc" | "desc";
 }
 
-export default function Multiview({ endpoint, columns, itemsPerPage, pageOptions, indexField }: MultiviewProps) {
+export default function Multiview({ endpoint, columns, itemsPerPage, pageOptions, indexField, rowComponent, emptyMessage }: MultiviewProps) {
     const [perPage, setPerPage] = useState<number>(itemsPerPage ?? 10);
     const [data, setData] = useState<CollectionResponse<Categoria> | null>(null);
     const [sortData, setSortData] = useState<SortData | null>({ field: "id", direction: "asc" });
@@ -102,7 +109,7 @@ export default function Multiview({ endpoint, columns, itemsPerPage, pageOptions
 
     return (
         <div className="overflow-x-auto">
-            <table className="table table-zebra w-full">
+            <table className="table table-zebra w-full flex flex-col">
                 <thead>
                     <tr>
                         {columns.map((column, index) => (
@@ -117,22 +124,20 @@ export default function Multiview({ endpoint, columns, itemsPerPage, pageOptions
                         ))}
                     </tr>
                 </thead>
-                <tbody>
-                        {data?.member.map((item:any, index:number) => (
-                            <tr key={item.id} className="hover:bg-base-300" onClick={() => redirectToDetailPage(item)}>
-                                {columns.map((column, colIndex) => (
-                                    <td key={colIndex} ref={(el) => {
-                                        if (el && column.async) {
-                                            asyncColumnsRef.current[index] = el;
-                                        }
-                                    }} data-uri={column.async && item[column.joinField ?? ""]} data-template={column.template} >
-                                        {(column.template
-                                            ? Handlebars.compile(column.template)(item)
-                                            : "")}
-                                    </td>
-                                ))}
+                <tbody className="grow">
+                        {data?.member?.length ?? 0 > 0 ? data?.member.map((item:any, index:number) => (
+                            rowComponent ? (
+                                React.createElement(rowComponent, { key: index, item, index, columns, redirectToDetailPage })
+                            ) : (
+                                <tr key={index} className="hover cursor-pointer" onClick={() => redirectToDetailPage(item)}>
+                                    <td colSpan={columns.length}>No se ha definido un elemento para renderizar</td>
+                                </tr>
+                            )
+                        )) : (
+                            <tr>
+                                <td colSpan={columns.length} className="text-center">{emptyMessage ?? "No hay datos disponibles"}</td>
                             </tr>
-                        ))}
+                        )}
                 </tbody>
                 <tfoot>
                     <tr>

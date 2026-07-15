@@ -14,6 +14,9 @@ import CategoriasIndex from './components/Categorias/CategoriasIndex';
 import TiposDocumentoIndex from './components/TiposDocumento/TiposDocumentoIndex';
 import categoriaSubmitAction from './components/Categorias/categoriaSubmitAction';
 import { tipoDocumentoSubmitAction } from './components/TiposDocumento/tipoDocumentoSubmitAction';
+import { ExpedientesIndex } from './components/Expedientes/ExpedientesIndex';
+import ExpedienteDetalle from './components/Expedientes/ExpedienteDetalle';
+import ExpedienteNuevo from './components/Expedientes/ExpedienteNuevo';
 
 const router = createBrowserRouter([
 	{ path: "/", element: <Layout />, errorElement: <NotFound />, id: "root", loader: routeAuthLoader, children: [
@@ -21,6 +24,9 @@ const router = createBrowserRouter([
 		{ path: "/logout", action: logoutAction },
 		{ path: "/catalogos/categorias/:id?", action: categoriaSubmitAction, element: <CategoriasIndex /> },
 		{ path: "/catalogos/tipos-de-documento/:id?", action: tipoDocumentoSubmitAction, element: <TiposDocumentoIndex />},
+		{ path: "/expedientes", element: <ExpedientesIndex /> },
+		{ path: "/expedientes/nuevo", element: <ExpedienteNuevo /> },
+		{ path: "/expedientes/:numExp", element: <ExpedienteDetalle /> }
 	]}, 
 	{ path: "/login", element: <Layout />, children: [
 		{ index: true, action: loginAction, element: <Login /> }

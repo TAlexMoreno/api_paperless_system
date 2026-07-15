@@ -3,6 +3,8 @@ export default class ApiState {
     static readonly loginEndpoint = "/api/login";
     static readonly profileEndpoint = "/api/profile";
     static readonly uiSettingsEndpoint = "/api/ui_settings";
+    static readonly categoriasEndpoint = "/api/categorias";
+    static readonly tiposDocumentoEndpoint = "/api/tipos";
 
     private static instance: ApiState;
 

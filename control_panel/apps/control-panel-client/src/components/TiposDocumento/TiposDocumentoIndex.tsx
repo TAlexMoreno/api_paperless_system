@@ -9,6 +9,36 @@ async function fetchTipoDocumento(id: string) {
     return await response.json();
 }
 
+async function fetchCategoria(uri: string): Promise<Categoria> {
+    let url = new URL(uri, window.location.origin);
+    const response = await fetch(url.toString());
+    return await response.json() as Categoria;
+}
+
+export function TipoDocumentoRow({ item, index, columns, redirectToDetailPage }: { item: any, index: number, columns: any[], redirectToDetailPage: (item: any) => void }) {
+
+    const [categoria, setCategoria] = useState<Categoria | null>(null);
+
+    useEffect(() => {
+        console.log(item);
+        if (item.categoria) {
+            fetchCategoria(item.categoria)
+                .then(setCategoria)
+                .catch(error => {
+                    console.error(error);
+                });
+        }
+    }, [item]);
+
+    return (
+        <tr key={index} className="hover cursor-pointer" onClick={() => redirectToDetailPage(item)}>
+            <td>{item.id}</td>
+            <td>{item.nombre}</td>
+            <td>{categoria?.nombre || (<span className="loading loading-dots loading-xs"></span>)}</td>
+        </tr>
+    );
+}
+
 async function fetchCategorias() {
     let url = new URL("/api/categorias", window.location.origin);
     let totalItems = 1;
@@ -108,14 +138,14 @@ export default function TiposDocumentoIndex() {
             <div className="card shadow-lg bg-base-200">
                 <div className="card-body">
                     <div className="flex flex-row items-center gap-4">
-                        <span className="card-title">Categorías</span>
-                        <button className="btn btn-circle btn-accent tooltip" data-tip="Agregar categoría"><Plus /></button>
+                        <span className="card-title">Tipos de Documento</span>
+                        <button className="btn btn-circle btn-accent tooltip" data-tip="Agregar nuevo tipo de documento"><Plus /></button>
                     </div>
-                    <Multiview endpoint="/api/tipos" columns={[
-                        { title: "ID", field: "id", template: "{{id}}" },
-                        { title: "Nombre", field: "nombre", template: "{{nombre}}" },
-                        { title: "Categoria", field: "categoria.nombre", template: "{{nombre}}", async: true, joinField: "categoria" },
-                    ]} indexField="id" />
+                    <Multiview endpoint="/api/tipos" columns={[ 
+                        { title: "ID", field: "id"},
+                        { title: "Nombre", field: "nombre"},
+                        { title: "Categoria", field: "categoria.nombre"},
+                    ]} indexField="id" rowComponent={TipoDocumentoRow} />
                 </div>
             </div>
         </div>

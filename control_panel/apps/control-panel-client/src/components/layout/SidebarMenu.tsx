@@ -1,4 +1,4 @@
-import { Archive, Bookmark, FileText, Home, TrendingUp } from "lucide-react";
+import { Archive, Bookmark, BookText, FileText, Home, TrendingUp } from "lucide-react";
 import type { plessProfile, plessUISettings } from "../../../../../packages/paperless/types";
 import { Link } from "react-router-dom";
 
@@ -21,6 +21,12 @@ export function SidebarMenu({ loggedInUser: _loggedInUser, uiSettings: _uiSettin
                         <Link to="/" className="is-drawer-close:tooltip is-drawer-close:tooltip-right" data-tip="Inicio">
                             <Home className="size-6" />
                             <span className="is-drawer-close:hidden">Inicio</span>
+                        </Link>   
+                    </li>
+                    <li>
+                        <Link to="/expedientes" className="is-drawer-close:tooltip is-drawer-close:tooltip-right" data-tip="Expedientes">
+                            <BookText className="size-6" />
+                            <span className="is-drawer-close:hidden">Expedientes</span>
                         </Link>   
                     </li>
                     <li>

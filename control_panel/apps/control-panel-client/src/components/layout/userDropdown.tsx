@@ -17,7 +17,7 @@ export default function userDropdown({ profile, uiSettings }: { profile: plessPr
                 </div>
             </div>
             <div className="card-actions justify-end items-center p-4 border-t">
-                <input type="checkbox" value="retro" className="toggle theme-controller" />
+                <input type="checkbox" value="winter" className="toggle theme-controller" />
                 <Form action="/logout" method="post">
                     <button type="submit" className="btn btn-primary btn-sm">Cerrar sesión</button>
                 </Form>

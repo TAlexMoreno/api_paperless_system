@@ -23,7 +23,7 @@ export default function Layout(){
                     {loggedInUser ? (
                         <UserDropdown profile={loggedInUser} uiSettings={uiSettings!} />
                     ) : (
-                        <input type="checkbox" value="retro" className="toggle theme-controller" />
+                        <input type="checkbox" value="winter" className="toggle theme-controller" />
                     )}
                 </nav>
                 <Outlet />

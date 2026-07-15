@@ -1,4 +1,38 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-  themes: dracula --default, retro;
+  themes: business --default, winter, dark, light, corporate, synthwave, retro, cyberpunk, valentine, halloween, garden, forest, aqua, lofi, pastel, fantasy, wireframe, black, luxury, dracula;
 }
+
+@keyframes fade-out-left {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+}
+
+@keyframes fade-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-fade-out-left {
+  animation: fade-out-left 280ms ease-out forwards;
+}
+
+.animate-fade-in-right {
+  animation: fade-in-right 280ms ease-out forwards;
+}
+
+
