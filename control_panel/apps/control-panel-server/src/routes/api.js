@@ -1,12 +1,12 @@
-import express from 'express';
 import APIRouter from '../api/apiRouter.js';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres/driver';
 import PaperlessConnector from '../libs/paperless/connector.js';
 import logger from '../libs/logger.js';
 import connectToPaperlessDatabase from '../db/paperless_config.js';
 import PaperlessDBUtils from '../api/paperlessDBUtils.js';
 export class ApiRoute {
-    constructor(app: express.Application, private db: NodePgDatabase) {
+    db;
+    constructor(app, db) {
+        this.db = db;
         app.get('/api/expedientes/orphaned', ApiRoute.checkUserLoggedIn.bind(this), this.handleOrphaned.bind(this));
         app.get('/api/profile', ApiRoute.checkUserLoggedIn.bind(this), this.getProfile.bind(this));
         app.get('/api/ui_settings', ApiRoute.checkUserLoggedIn.bind(this), this.getUiSettings.bind(this));
@@ -14,8 +14,7 @@ export class ApiRoute {
         app.get('/api/:entity', ApiRoute.checkUserLoggedIn.bind(this), this.handleGetEntity.bind(this));
         app.post('/api/:entity/:id', ApiRoute.checkUserLoggedIn.bind(this), this.handlePostItem.bind(this));
     }
-
-    async handleOrphaned(req: express.Request, res: express.Response) {
+    async handleOrphaned(req, res) {
         let db = await connectToPaperlessDatabase();
         let paperlessExp = await PaperlessDBUtils.getOrphanedExpedientes(db, this.db);
         res.status(200).json({
@@ -25,13 +24,13 @@ export class ApiRoute {
             "member": paperlessExp
         });
     }
-
-    async handlePostItem(req: express.Request<{ entity: string; id: string }>, res: express.Response) {
+    async handlePostItem(req, res) {
         let apiRouter = new APIRouter(req, this.db);
         try {
             const updatedItem = await apiRouter.postItem(req.params.id, req.body);
             return res.status(200).json(updatedItem);
-        } catch (error: any) {
+        }
+        catch (error) {
             if (error.name === "EntityNotFoundError") {
                 return res.status(404).json({ message: "Item not found" });
             }
@@ -39,13 +38,13 @@ export class ApiRoute {
             return res.status(500).json({ message: "Internal server error" });
         }
     }
-
-    async handleGetItem(req: express.Request<{ entity: string; id: string }>, res: express.Response) {
+    async handleGetItem(req, res) {
         let apiRouter = new APIRouter(req, this.db);
         try {
             const item = await apiRouter.getItem(req.params.id);
             return res.status(200).json(item);
-        } catch (error: any) {
+        }
+        catch (error) {
             if (error.name === "EntityNotFoundError") {
                 return res.status(404).json({ message: "Item not found" });
             }
@@ -53,30 +52,26 @@ export class ApiRoute {
             return res.status(500).json({ message: "Internal server error" });
         }
     }
-
-    async handleGetEntity(req: express.Request<{ entity: string }>, res: express.Response) {
+    async handleGetEntity(req, res) {
         let apiRouter = new APIRouter(req, this.db);
         const collection = await apiRouter.getCollection();
         return res.status(200).json(collection);
     }
-
-    static async checkUserLoggedIn(req: express.Request, res: express.Response, next: express.NextFunction) {
+    static async checkUserLoggedIn(req, res, next) {
         const token = req.cookies?.paperless_token ?? null;
         if (!token) {
             return res.status(401).json({ message: "Unauthorized" });
         }
-
         let paperlessConnector = new PaperlessConnector(token);
         try {
             await paperlessConnector.getProfile();
-        } catch (error: any) {
+        }
+        catch (error) {
             return res.status(401).json({ message: "Unauthorized" });
         }
-
         next();
     }
-
-    async getProfile(req: express.Request, res: express.Response) {
+    async getProfile(req, res) {
         let token = req.cookies?.paperless_token ?? null;
         if (!token) {
             return res.status(401).json({ message: "Unauthorized" });
@@ -85,12 +80,12 @@ export class ApiRoute {
         try {
             const profile = await paperlessConnector.getProfile();
             return res.status(200).json(profile);
-        } catch (error: any) {
+        }
+        catch (error) {
             return res.status(401).json({ message: "Unauthorized" });
         }
     }
-
-    async getUiSettings(req: express.Request, res: express.Response) {
+    async getUiSettings(req, res) {
         let token = req.cookies?.paperless_token ?? null;
         if (!token) {
             return res.status(401).json({ message: "Unauthorized" });
@@ -99,7 +94,8 @@ export class ApiRoute {
         try {
             const uiSettings = await paperlessConnector.getUiSettings();
             return res.status(200).json(uiSettings);
-        } catch (error: any) {
+        }
+        catch (error) {
             return res.status(401).json({ message: "Unauthorized" });
         }
     }
