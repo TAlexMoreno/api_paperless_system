@@ -52,6 +52,32 @@ export default class ApiState {
         return response.json() as Promise<T>;
     }
 
+    async getAll<T>(endpoint: URL, itemsPerPage: number = 100): Promise<T[]> {
+        let total = 1;
+        let page = 1;
+        const items: T[] = [];
+
+        while (items.length < total) {
+            endpoint.searchParams.set("page", page.toString());
+            endpoint.searchParams.set("itemsPerPage", itemsPerPage.toString());
+            const response = await fetch(endpoint.toString(), {
+                method: "GET",
+                credentials: "include"
+            });
+
+            if (!response.ok) {
+                console.log("GET request failed with status:", response.status);
+                throw new Error("GET request failed");
+            }
+
+            const data: { member: T[]; totalItems: number } = await response.json();
+            items.push(...data.member);
+            total = data.totalItems;
+            page++;
+        }
+        return items;
+    }
+
     async post<T>(endpoint: string, data: any): Promise<T> {
         const response = await fetch(endpoint, {
             method: "POST",

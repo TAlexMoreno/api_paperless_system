@@ -2,46 +2,35 @@ import { BookText, CircleCheck } from "lucide-react";
 import { Fragment, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import ApiState from "../../utils/api";
-import type { Categoria, CollectionResponse, TipoDocumento } from "../../../../../packages/server/types";
+import type { Categoria, Expediente, TipoDocumento } from "../../../../../packages/server/types";
+import { AutocompleteSelect } from "../../sharedComponents/AutocompleteSelect";
+import IMaskInput from "react-imask/esm/input";
+import { IMask } from "react-imask";
 
 async function getCategoriasAndTiposDocumento(): Promise<{ categorias: Categoria[], tipos: TipoDocumento[] }> {
-    let categorias: Categoria[] = [];
-    let total = 1
-    let page = 1;
-    while (categorias.length < total) {
-        let url = new URL(ApiState.categoriasEndpoint, window.location.origin);
-        url.searchParams.append("itemsPerPage", "100");
-        url.searchParams.append("page", page.toString());
-        url.searchParams.append("order[id]", "asc");
-        const response = ApiState.getInstance().get<CollectionResponse<Categoria>>(url);
-        const data: CollectionResponse<Categoria> = await response;
-        categorias.push(...data.member);
-        total = data.totalItems;
-        page++;// Return early to avoid infinite loop
-    }
-
-    let tipos = [];
-    total = 1;
-    page = 1;
-    while (tipos.length < total) {
-        let url = new URL(ApiState.tiposDocumentoEndpoint, window.location.origin);
-        url.searchParams.append("itemsPerPage", "100");
-        url.searchParams.append("page", page.toString());
-        const response = ApiState.getInstance().get<CollectionResponse<TipoDocumento>>(url);
-        const data: CollectionResponse<TipoDocumento> = await response;
-        tipos.push(...data.member);
-        total = data.totalItems;
-        page++;
-    }
-
-    return { categorias, tipos };
+    let api = ApiState.getInstance();
+    return { 
+        categorias: await api.getAll<Categoria>(new URL(ApiState.categoriasEndpoint, window.location.origin)),
+        tipos: await api.getAll<TipoDocumento>(new URL(ApiState.tiposDocumentoEndpoint, window.location.origin))
+    };
 }
 
 export default function ExpedienteNuevo() {
     const [searchParams] = useSearchParams();
     const clave = searchParams.get("clave");
     const [step, setStep] = useState<number>(0);
-    const [expediente, setExpediente] = useState<any>({ clave: clave ?? "", descripcion: "", tipos: [] });
+    const [expediente, setExpediente] = useState<Expediente>({
+        "@id": "",
+        id: 0,
+        clave: clave ?? "",
+        descripcion: "",
+        tiposDocumento: [],
+        correspondentId: 0,
+        monto: 0,
+        createdAt: "",
+        updatedAt: "",
+        createdBy: "",
+    });
     const [categorias, setCategorias] = useState<Categoria[]>([]);
     const [tiposDocumento, setTiposDocumento] = useState<TipoDocumento[]>([]);
 
@@ -67,31 +56,61 @@ export default function ExpedienteNuevo() {
 
     return (
         <div className="flex flex-col gap-4 grow p-4">
-            <div className="card shadow-lg bg-base-300">
+            <div className="card shadow-md bg-base-200 border-3 border-base-300">
                 <div className="card-body">
                     <ul className="steps">
-                        <li className={`step ${step === 0 ? "step-primary" : ""}`}>Datos generales</li>
-                        <li className={`step ${step === 1 ? "step-primary" : ""}`}>Documentación</li>
-                        <li className={`step ${step === 2 ? "step-primary" : ""}`}>Revisión</li>
-                        <li className={`step ${step === 3 ? "step-primary" : ""}`}>Confirmación</li>
+                        <li className={`step ${step === 0 ? "step-primary" : "step-secondary"}`}>Datos generales</li>
+                        <li className={`step ${step < 1 ? "" : step === 1 ? "step-primary" : "step-secondary"}`}>Documentación</li>
+                        <li className={`step ${step < 2 ? "" : step === 2 ? "step-primary" : "step-secondary"}`}>Revisión</li>
+                        <li className={`step ${step < 3 ? "" : step === 3 ? "step-primary" : "step-secondary"}`}>Confirmación</li>
                     </ul>
                 </div>
             </div>
             <div className="card shadow-lg bg-base-300">
+                <div className="card-body flex flex-row items-center gap-4 border-b pb-4 mb-4">
+                    <BookText className="text-primary" />
+                    <span className="card-title text-primary">Nuevo expediente</span>
+                </div>
                 <div className="card-body">
-                    <div className="flex flex-row items-center gap-4">
-                        <BookText className="text-primary" />
-                        <span className="card-title text-primary">Nuevo expediente</span>
-                    </div>
-
                     <form id="expediente-step-0" onSubmit={onSubmitForm} className={`${step === 0 ? "" : "hidden"}`}>
                         <fieldset className="fieldset w-full">
                             <label className="label">Número de expediente</label>
                             <input required type="text" name="clave" className="input validator w-full" value={expediente.clave} onChange={e => setExpediente({ ...expediente, clave: e.target.value })} />
-                        
+
+                            <AutocompleteSelect
+                                name="correspondentId"
+                                label="Empresa o interlocutor"
+                                placeholder="Teclea el nombre de la empresa para buscar en el catálogo"
+                                queryParamName="name__icontains"
+                                endPoint="/api/paperless/correspondents/"
+                                resultsResolver={(results: any) => results.results ?? []}
+                                renderItem={(item: any) => <div>{item.name}</div>}
+                                valueGetter={(item: any) => item.id}
+                                labelGetter={(item: any) => item.name}
+                                onChange={(value: any) => setExpediente({ ...expediente, correspondentId: value.id, correspondentData: value })}
+                                required={true}
+                            />
+
+                            <label className="label">Monto total del expediente</label>
+                            <div className="input w-full">
+                                <span>$</span>
+                                <IMaskInput 
+                                    className="validator" 
+                                    mask={IMask.MaskedNumber} 
+                                    radix="." 
+                                    scale={2} 
+                                    thousandsSeparator=","
+                                    onAccept={(value: any, mask: any) => {
+                                        setExpediente({ ...expediente, monto: mask.unmaskedValue })
+                                    }}
+                                />
+                                <span>MXN</span>
+                            </div>
+
                             <label className="label">Descripción del expediente</label>
                             <textarea required name="descripcion" maxLength={240} className="textarea validator w-full" value={expediente.descripcion} onChange={e => setExpediente({ ...expediente, descripcion: e.target.value.slice(0, 240) })}></textarea>
                             <div className="label justify-end">{expediente.descripcion?.length ?? 0}/240</div>
+
                         </fieldset>
                     </form>
 
@@ -99,42 +118,42 @@ export default function ExpedienteNuevo() {
                         <p className="text-xl font-semibold">Check list de expediente unitario</p>
                         <p className="text-sm">Seleccione los tipos de documento que aplican para este expediente. El progreso del expediente se mostrara basado en los documentos seleccionados.</p>
 
-                        <table className="table w-full table-zebra mt-4">
+                        <table className="table w-full table-zebra mt-4 border">
                             <tbody>
                             {categorias.length > 0 ? categorias.map(categoria => (
                                 <Fragment key={categoria.id}>
                                     <tr className="bg-primary text-primary-content" key={categoria.id}>
                                         <th className="text-center">{categoria.nombre}</th>
                                         <th className="text-center">
-                                            <button className="btn btn-xs btn-secondary" type="button" onClick={() => {
+                                            <button tabIndex={0} className="btn btn-xs btn-secondary" type="button" onClick={() => {
                                                 const tiposEnCategoria = tiposDocumento.filter(tipo => tipo.categoria === categoria["@id"]).map(tipo => tipo.id);
-                                                const tiposSeleccionadosEnCategoria = expediente.tipos?.filter((id: number) => tiposEnCategoria.includes(id)) ?? [];
+                                                const tiposSeleccionadosEnCategoria = expediente.tiposDocumento?.filter((tipo) => tiposEnCategoria.includes(tipo.id)) ?? [];
                                                 if (tiposSeleccionadosEnCategoria.length === tiposEnCategoria.length) {
                                                     // Deselect all
-                                                    setExpediente({ ...expediente, tipos: (expediente.tipos ?? []).filter((id: number) => !tiposEnCategoria.includes(id)) });
+                                                    setExpediente({ ...expediente, tiposDocumento: (expediente.tiposDocumento ?? []).filter((tipo) => !tiposEnCategoria.includes(tipo.id)) });
                                                 } else {
                                                     // Select all
-                                                    setExpediente({ ...expediente, tipos: [...new Set([...(expediente.tipos ?? []), ...tiposEnCategoria])] });
+                                                    setExpediente({ ...expediente, tiposDocumento: [...new Set([...(expediente.tiposDocumento ?? []).map(tipo => tipo.id), ...tiposEnCategoria])].map(id => ({ "@id": "", id, nombre: "", categoria: "" })) });
                                                 }
-                                            }}><CircleCheck className="size-4" />{expediente.tipos?.filter((id: number) => tiposDocumento.find(tipo => tipo.id === id)?.categoria === categoria["@id"]).length ?? 0}</button>
+                                            }}><CircleCheck className="size-4" />{expediente.tiposDocumento?.filter((tipo) => tiposDocumento.find(t => t.id === tipo.id)?.categoria === categoria["@id"]).length ?? 0}</button>
                                         </th>
                                     </tr>
                                     {tiposDocumento.filter(tipo => tipo.categoria === categoria["@id"]).map(tipo => (
-                                        <tr key={tipo.id} className={`${expediente.tipos?.includes(tipo.id) ? "bg-secondary/60 text-secondary-content" : ""} cursor-pointer group hover:bg-accent/60`} onClick={() => {
-                                            const isSelected = expediente.tipos?.includes(tipo.id);
+                                        <tr key={tipo.id} className={`${expediente.tiposDocumento?.some(t => t.id === tipo.id) ? "bg-secondary/60 text-secondary-content" : ""} cursor-pointer group hover:bg-accent/60`} onClick={() => {
+                                            const isSelected = expediente.tiposDocumento?.some(t => t.id === tipo.id);
                                             if (isSelected) {
-                                                setExpediente({ ...expediente, tipos: (expediente.tipos ?? []).filter((id: number) => id !== tipo.id) });
+                                                setExpediente({ ...expediente, tiposDocumento: (expediente.tiposDocumento ?? []).filter((t) => t.id !== tipo.id) });
                                             } else {
-                                                setExpediente({ ...expediente, tipos: [...(expediente.tipos ?? []), tipo.id] });
+                                                setExpediente({ ...expediente, tiposDocumento: [...(expediente.tiposDocumento ?? []), tipo] });
                                             }
                                         }}>
                                             <td>{tipo.nombre}</td>
                                             <td className="text-center">
-                                                <input type="checkbox" name={`tipo_${tipo.id}`} checked={Boolean(expediente.tipos?.includes(tipo.id))} onChange={e => {
+                                                <input type="checkbox" name={`tipo_${tipo.id}`} checked={Boolean(expediente.tiposDocumento?.some(t => t.id === tipo.id))} onChange={e => {
                                                     if (e.target.checked) {
-                                                        setExpediente({ ...expediente, tipos: [...(expediente.tipos ?? []), tipo.id] });
+                                                        setExpediente({ ...expediente, tiposDocumento: [...(expediente.tiposDocumento ?? []), tipo] });
                                                     } else {
-                                                        setExpediente({ ...expediente, tipos: (expediente.tipos ?? []).filter((id: number) => id !== tipo.id) });
+                                                        setExpediente({ ...expediente, tiposDocumento: (expediente.tiposDocumento ?? []).filter((t) => t.id !== tipo.id) });
                                                     }
                                                 }} className="checkbox"/>
                                             </td>
@@ -144,6 +163,40 @@ export default function ExpedienteNuevo() {
                             )) : (
                                 <tr><th colSpan={2} className="text-center">No hay categorías disponibles</th></tr>
                             )}
+                            </tbody>
+                        </table>
+                    </form>
+
+                    <form id="expediente-step-2" onSubmit={onSubmitForm} className={`${step === 2 ? "" : "hidden"}`}>
+                        <p className="text-xl font-semibold">Revisión de datos del expediente</p>
+                        <p className="text-sm">Revise los datos del expediente antes de continuar. Si necesita hacer cambios, puede regresar a los pasos anteriores.</p>
+
+                        <p className="text-lg mt-4">{expediente.clave}</p>
+                        <p className="text-sm">{expediente.descripcion}</p>
+                        <p className="mt-2"><span className="font-bold">Empresa: </span>{expediente.correspondentData?.name}</p>
+                        <p className="mt-2"><span className="font-bold">Monto total:</span> {Number(expediente.monto).toLocaleString("es-MX", { style: "currency", currency: "MXN", minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                        <p className="text-lg font-bold mt-4">Documentos solicitados</p>
+                        <table className="table table-zebra border">
+                            <thead>
+                                <tr>
+                                    <th>Categoria/Etapa</th>
+                                    <th>Tipo de documento</th>
+                                    <th>Comentarios</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {expediente.tiposDocumento?.map(tipo => {
+                                    const categoria = categorias.find(c => c["@id"] === tipo.categoria);
+                                    return (
+                                        <tr key={tipo.id}>
+                                            <td>{categoria?.nombre}</td>
+                                            <td>{tipo.nombre}</td>
+                                            <td className="w-1/2">
+                                                <textarea className="textarea textarea-bordered w-full min-h-10"></textarea>
+                                            </td>
+                                        </tr>
+                                    )
+                                })}
                             </tbody>
                         </table>
                     </form>

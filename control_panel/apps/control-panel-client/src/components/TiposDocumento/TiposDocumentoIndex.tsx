@@ -35,6 +35,7 @@ export function TipoDocumentoRow({ item, index, columns, redirectToDetailPage }:
             <td>{item.id}</td>
             <td>{item.nombre}</td>
             <td>{categoria?.nombre || (<span className="loading loading-dots loading-xs"></span>)}</td>
+            <td>{item.paperlessId}</td>
         </tr>
     );
 }
@@ -145,6 +146,7 @@ export default function TiposDocumentoIndex() {
                         { title: "ID", field: "id"},
                         { title: "Nombre", field: "nombre"},
                         { title: "Categoria", field: "categoria.nombre"},
+                        { title: "Id en paperless", field: "paperlessId" }
                     ]} indexField="id" rowComponent={TipoDocumentoRow} />
                 </div>
             </div>
